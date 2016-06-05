@@ -13,6 +13,7 @@ class CraigslistItem(scrapy.Item):
     title = scrapy.Field()
     bedroom = scrapy.Field()
     bathroom = scrapy.Field()
+    area = scrapy.Field()
     desc = scrapy.Field()
     price = scrapy.Field()
     phone = scrapy.Field()
