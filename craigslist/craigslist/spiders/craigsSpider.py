@@ -30,7 +30,6 @@ class CraigsSpider(scrapy.Spider):
         item['area'] = attributes[2] if len(attributes) == 3 else None
 
         tag = response.url.split('/')[-3]
-        
         reply_url = response.url.replace(tag,'reply/tpa').split('.html')[0]
         request = scrapy.Request(reply_url, callback=self.parse_contact)
         request.meta['item'] = item
