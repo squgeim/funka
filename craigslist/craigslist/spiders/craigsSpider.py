@@ -7,7 +7,8 @@ class CraigsSpider(scrapy.Spider):
     name = "craigs"
     allowed_domains = ["tampa.craigslist.org"]
     start_urls = [
-        "https://tampa.craigslist.org/pnl/apa/5577150767.html"
+        "https://tampa.craigslist.org/pnl/apa/5577150767.html",
+        "https://tampa.craigslist.org/hil/apa/5591194647.html"
     ]
 
     def parse(self, response):
@@ -28,7 +29,9 @@ class CraigsSpider(scrapy.Spider):
         item['bathroom'] = attributes[1]
         item['area'] = attributes[2] if len(attributes) == 3 else None
 
-        reply_url = response.url.replace('pnl','reply/tpa')[:-5]
+        tag = response.url.split('/')[-3]
+        
+        reply_url = response.url.replace(tag,'reply/tpa').split('.html')[0]
         request = scrapy.Request(reply_url, callback=self.parse_contact)
         request.meta['item'] = item
         return request
