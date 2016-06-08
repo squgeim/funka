@@ -37,18 +37,43 @@ class ListingscrapeSpider(scrapy.Spider):
         
         title = response.xpath('//span[@id="titletextonly"]/text()')\
                 .extract_first()
-        desc = '\n'.join(line.strip() for line in \
-                response.xpath('//section[@id="postingbody"]/text()').extract())
+        
         price = response.xpath('//span[@class="price"]/text()').extract_first()
+        
         attributes = response.xpath('//p[@class="attrgroup"]/span/b/text()')\
                 .extract()
 
+        address = response.xpath('//div[@class="mapaddress"]/text()')\
+                .extract_first()
+
+        latitude = response.xpath('//div[@id="map"]/@data-latitude')\
+                .extract_first()
+
+        longitude = response.xpath('//div[@id="map"]/@data-longitude')\
+                .extract_first()
+        
+        desc_xpath = response.xpath('//section[@id="postingbody"]/text()')
+
+        desc_contact_link = desc_xpath.xpath('//a[@class="showcontact"]/@href')\
+                .extract_first()
+
+        if desc_contact_link:
+            desc_request = scrapy.Request( url_start + desc_contact_link,
+                            callback=self.parse_desc )
+            desc_request.meta['item'] = item
+            yield desc_request
+        else:
+            desc = '\n'.join(line.strip() for line in desc_xpath.extract())
+            item['desc'] = desc
+
+        item['url'] = response.url
         item['title'] = title
-        item['desc'] = desc
         item['price'] = price
         item['bedroom'] = attributes[0] if len(attributes) >= 1 else None
         item['bathroom'] = attributes[1] if len(attributes) >= 2 else None
         item['area'] = attributes[2] if len(attributes) == 3 else None
+        item['address'] = address
+        item['latlong'] = (latitude, longitude)
         
         try:
             reply_url = url_start + response\
@@ -62,7 +87,13 @@ class ListingscrapeSpider(scrapy.Spider):
             item['phone'] = None
             item['email'] = None
             yield item
-        
+
+    def parse_desc(self, response):
+        item = response.meta['item']
+        desc = '\n'.join(line.strip() for line in response.xpath('//')\
+                .extract())
+        item['desc'] = desc
+        yield item
         
     def parse_contact(self, response):
         item = response.meta['item']

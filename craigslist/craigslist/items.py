@@ -9,6 +9,7 @@ import scrapy
 
 class CraigslistItem(scrapy.Item):
     # define the fields for your item here like:
+    url = scrapy.Field()
     title = scrapy.Field()
     bedroom = scrapy.Field()
     bathroom = scrapy.Field()
@@ -18,3 +19,5 @@ class CraigslistItem(scrapy.Item):
     phone = scrapy.Field()
     email = scrapy.Field()
     blurb = scrapy.Field()
+    address = scrapy.Field()
+    latlong = scrapy.Field()
