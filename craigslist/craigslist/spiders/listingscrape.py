@@ -19,10 +19,13 @@ class ListingscrapeSpider(scrapy.Spider):
             abs_url = url_start + link
             yield scrapy.Request(abs_url, callback=self.parse_detail)
             
-        next_url = url_start + response\
-                .xpath('//a[@class="button next"]/@href').extract_first()
+	    try:    
+            next_url = url_start + response\
+                    .xpath('//a[@class="button next"]/@href').extract_first()
         
-        yield scrapy.Request(next_url, callback=self.parse)
+            yield scrapy.Request(next_url, callback=self.parse)
+        except TypeError:
+            print('Complete.')
         
     
     def parse_detail(self, response):
@@ -59,7 +62,6 @@ class ListingscrapeSpider(scrapy.Spider):
             item['phone'] = None
             item['email'] = None
             yield item
-        
         
         
     def parse_contact(self, response):
