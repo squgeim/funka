@@ -11,8 +11,7 @@ class ListingscrapeSpider(scrapy.Spider):
     )
 
     def parse(self, response):
-        url_start = ''.join(list( response.url.partition( \
-                        response.url.split('/')[2] ))[:2])
+        url_start = ''.join(list( response.url.partition( response.url.split('/')[2] ) )[:2])
     
         links = response.xpath('//a[@class="hdrlnk"]/@href').extract()
         for link in links:
@@ -30,36 +29,28 @@ class ListingscrapeSpider(scrapy.Spider):
     
     def parse_detail(self, response):
     
-        url_start = ''.join(list( response.url.partition( \
-                        response.url.split('/')[2] ))[:2])
+        url_start = ''.join(list( response.url.partition( response.url.split('/')[2] ))[:2])
                         
         item = CraigslistItem()
         
-        title = response.xpath('//span[@id="titletextonly"]/text()')\
-                .extract_first()
+        title = response.xpath('//span[@id="titletextonly"]/text()').extract_first()
         
         price = response.xpath('//span[@class="price"]/text()').extract_first()
         
-        attributes = response.xpath('//p[@class="attrgroup"]/span/b/text()')\
-                .extract()
+        attributes = response.xpath('//p[@class="attrgroup"]/span/b/text()').extract()
 
-        address = response.xpath('//div[@class="mapaddress"]/text()')\
-                .extract_first()
+        address = response.xpath('//div[@class="mapaddress"]/text()').extract_first()
 
-        latitude = response.xpath('//div[@id="map"]/@data-latitude')\
-                .extract_first()
+        latitude = response.xpath('//div[@id="map"]/@data-latitude').extract_first()
 
-        longitude = response.xpath('//div[@id="map"]/@data-longitude')\
-                .extract_first()
+        longitude = response.xpath('//div[@id="map"]/@data-longitude').extract_first()
         
         desc_xpath = response.xpath('//section[@id="postingbody"]/text()')
 
-        desc_contact_link = desc_xpath.xpath('//a[@class="showcontact"]/@href')\
-                .extract_first()
+        desc_contact_link = desc_xpath.xpath('//a[@class="showcontact"]/@href').extract_first()
 
         if desc_contact_link:
-            desc_request = scrapy.Request( url_start + desc_contact_link,
-                            callback=self.parse_desc )
+            desc_request = scrapy.Request( url_start + desc_contact_link, callback=self.parse_desc )
             desc_request.meta['item'] = item
             yield desc_request
         else:
@@ -77,8 +68,7 @@ class ListingscrapeSpider(scrapy.Spider):
         
         try:
             reply_url = url_start + response\
-                .xpath('//span[@class="replylink"]/a[@id="replylink"]/@href')\
-                .extract_first()
+                .xpath('//span[@class="replylink"]/a[@id="replylink"]/@href').extract_first()
             request = scrapy.Request(reply_url, callback=self.parse_contact)
             request.meta['item'] = item
             yield request
@@ -90,8 +80,7 @@ class ListingscrapeSpider(scrapy.Spider):
 
     def parse_desc(self, response):
         item = response.meta['item']
-        desc = '\n'.join(line.strip() for line in response.xpath('//')\
-                .extract())
+        desc = '\n'.join(line.strip() for line in response.xpath('//').extract())
         item['desc'] = desc
         yield item
         
@@ -100,8 +89,8 @@ class ListingscrapeSpider(scrapy.Spider):
         
         try:
             phone = ' '.join(
-                response.xpath('//a[starts-with(@href, "tel:")]/'
-                'following-sibling::ul/li/text()').extract_first().split()[1:]
+                response.xpath('//a[starts-with(@href, "tel:")]/following-sibling::ul/li/text()')\
+                    .extract_first().split()[1:]
             )
         except AttributeError:
             phone = None
