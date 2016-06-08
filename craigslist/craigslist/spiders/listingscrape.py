@@ -18,8 +18,8 @@ class ListingscrapeSpider(scrapy.Spider):
         for link in links:
             abs_url = url_start + link
             yield scrapy.Request(abs_url, callback=self.parse_detail)
-            
-	    try:    
+
+        try:
             next_url = url_start + response\
                     .xpath('//a[@class="button next"]/@href').extract_first()
         
