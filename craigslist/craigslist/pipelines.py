@@ -8,4 +8,7 @@
 
 class CraigslistPipeline(object):
     def process_item(self, item, spider):
+        if item['desc']:
+            item['blurb'] = item['desc'][:100]
+            item['blurb'] += '...' if len(item['desc']) > 100 else ''
         return item

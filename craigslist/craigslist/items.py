@@ -17,3 +17,4 @@ class CraigslistItem(scrapy.Item):
     price = scrapy.Field()
     phone = scrapy.Field()
     email = scrapy.Field()
+    blurb = scrapy.Field()
