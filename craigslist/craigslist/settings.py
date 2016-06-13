@@ -67,7 +67,7 @@ ITEM_PIPELINES = {
    'scrapy.pipelines.images.ImagesPipeline': 300
 }
 
-IMAGES_STORE = '/home/squgeim'
+IMAGES_STORE = 'data/images'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
