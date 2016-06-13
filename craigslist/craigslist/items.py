@@ -21,3 +21,6 @@ class CraigslistItem(scrapy.Item):
     blurb = scrapy.Field()
     address = scrapy.Field()
     latlong = scrapy.Field()
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
+    image_locations = scrapy.Field()

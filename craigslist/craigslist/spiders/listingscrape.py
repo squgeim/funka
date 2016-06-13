@@ -14,10 +14,13 @@ class ListingscrapeSpider(scrapy.Spider):
         url_start = ''.join(list( response.url.partition( response.url.split('/')[2] ) )[:2])
     
         links = response.xpath('//a[@class="hdrlnk"]/@href').extract()
+        #links = [ '/pnl/apa/5595367539.html' ]
         for link in links:
             abs_url = url_start + link
             yield scrapy.Request(abs_url, callback=self.parse_detail)
 
+        #return
+        
         try:
             next_url = url_start + response\
                     .xpath('//a[@class="button next"]/@href').extract_first()
@@ -34,6 +37,8 @@ class ListingscrapeSpider(scrapy.Spider):
         item = CraigslistItem()
         
         title = response.xpath('//span[@id="titletextonly"]/text()').extract_first()
+
+        image_urls = response.xpath('//div[@class="swipe-wrap"]/div/img/@src').extract()
         
         price = response.xpath('//span[@class="price"]/text()').extract_first()
         
@@ -45,7 +50,7 @@ class ListingscrapeSpider(scrapy.Spider):
 
         longitude = response.xpath('//div[@id="map"]/@data-longitude').extract_first()
         
-        desc_xpath = response.xpath('//section[@id="postingbody"]/text()')
+        desc_xpath = response.xpath('//section[@id="postingbody"]/node()')
 
         desc_contact_link = desc_xpath.xpath('//a[@class="showcontact"]/@href').extract_first()
 
@@ -54,7 +59,7 @@ class ListingscrapeSpider(scrapy.Spider):
             desc_request.meta['item'] = item
             yield desc_request
         else:
-            desc = '\n'.join(line.strip() for line in desc_xpath.extract())
+            desc = ''.join(line.strip() for line in desc_xpath.extract())
             item['desc'] = desc
 
         item['url'] = response.url
@@ -65,6 +70,7 @@ class ListingscrapeSpider(scrapy.Spider):
         item['area'] = attributes[2] if len(attributes) == 3 else None
         item['address'] = address
         item['latlong'] = (latitude, longitude)
+        item['image_urls'] = image_urls
         
         try:
             reply_url = url_start + response\
@@ -80,7 +86,7 @@ class ListingscrapeSpider(scrapy.Spider):
 
     def parse_desc(self, response):
         item = response.meta['item']
-        desc = '\n'.join(line.strip() for line in response.xpath('//').extract())
+        desc = response.body
         item['desc'] = desc
         yield item
         

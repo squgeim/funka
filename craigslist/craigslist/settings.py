@@ -19,7 +19,7 @@ NEWSPIDER_MODULE = 'craigslist.spiders'
 #USER_AGENT = 'craigslist (+http://www.yourdomain.com)'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS=32
+#CONCURRENT_REQUESTS=0
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
@@ -61,9 +61,13 @@ NEWSPIDER_MODULE = 'craigslist.spiders'
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
+
 ITEM_PIPELINES = {
-   'craigslist.pipelines.CraigslistPipeline': 300,
+   'craigslist.pipelines.CraigslistPipeline': 400,
+   'scrapy.pipelines.images.ImagesPipeline': 300
 }
+
+IMAGES_STORE = '/home/squgeim'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
