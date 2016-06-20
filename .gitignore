@@ -1,3 +1,6 @@
 *.pyc
 phunka_venv
 craigslist/data/
+similarweb/data/
+excel/
+*.swp
