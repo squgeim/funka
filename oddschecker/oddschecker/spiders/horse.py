@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
-from oddschecker.items import HorseracingItem
+from oddschecker.items import GameItem
 
 class HorseSpider(scrapy.Spider):
     name = "horse"
@@ -16,8 +16,9 @@ class HorseSpider(scrapy.Spider):
             yield scrapy.Request(self.root_domain + link, callback = self.parse_horseracing)
 
     def parse_horseracing(self, response):
-        item = HorseracingItem()
+        item = GameItem()
 
+        match_id = response.xpath('//div[@id="oddsTableContainer"]/table/@data-mid').extract_first()
         name = response.xpath('//div[@id="oddsTableContainer"]/table/@data-sname').extract_first()
         datetime = response.xpath('//div[@id="oddsTableContainer"]/table/@data-time').extract_first()
         tournament = response.xpath('//div[@id="oddsTableContainer"]/table/@data-ename').extract_first()
@@ -40,6 +41,7 @@ class HorseSpider(scrapy.Spider):
                 'best': horse_best
             }
 
+        item['match_id'] = match_id
         item['match'] = name
         item['datetime'] = datetime
         item['tournament'] = tournament

@@ -2,22 +2,44 @@
 import scrapy
 from oddschecker.items import GameItem
 
-class FootballSpider(scrapy.Spider):
-    name = "football"
+class OddsSpider(scrapy.Spider):
+    name = "odds"
     allowed_domains = ["oddschecker.com"]
-    start_urls = (
-        'http://www.oddschecker.com/football/football-coupons/major-leagues-cups',
-    )
+    football_urls = [
+        'http://www.oddschecker.com/football/football-coupons/major-leagues-cups'
+    ]
+    horse_urls = [
+        'http://www.oddschecker.com/horse-racing/'
+    ]
     root_domain = 'http://oddschecker.com'
 
-    def parse(self, response):
+    def start_requests(self):
+        for url in self.football_urls:
+            yield scrapy.Request(url, callback = self.parse_football)
+
+        for url in self.horse_urls:
+            yield scrapy.Request(url, callback = self.parse_horse)
+
+    def parse_horse(self, response):
+        all_links = response.xpath('//a[@class="race-time time"]/@href').extract()
+        for link in all_links:
+            request = scrapy.Request(self.root_domain + link, callback = self.parse_odds)
+            request.meta['game'] = 'horse'
+            yield request
+
+    def parse_football(self, response):
         all_links = response.xpath('//td[@class="betting"]/a/@href').extract()
         for link in all_links:
-            yield scrapy.Request( self.root_domain + link, callback = self.parse_football_match )
+            request = scrapy.Request(self.root_domain + link, callback = self.parse_odds)
+            request.meta['game'] = 'football'
+            yield request
 
-    def parse_football_match(self, response):
+    def parse_odds(self, response):
+        game = response.meta['game']
         item = GameItem()
-        
+
+        item['game'] = game
+
         match_id = response.xpath('//div[@id="oddsTableContainer"]/table/@data-mid').extract_first()
         name = response.xpath('//div[@id="oddsTableContainer"]/table/@data-sname').extract_first()
         datetime = response.xpath('//div[@id="oddsTableContainer"]/table/@data-time').extract_first()
@@ -29,6 +51,10 @@ class FootballSpider(scrapy.Spider):
         odds = {}
 
         for team in teams:
+
+            if(game == 'horse'):
+                if('eventTableRowNonRunner' in team.xpath('./@class').extract_first().split()): continue
+
             team_name = team.xpath('./@data-bname').extract_first()
             team_odds = team.xpath('.//td/text()').extract()
             team_best = team.xpath('.//td[contains(concat(" ", @class, " "), " b ")]/@data-o').extract_first()
@@ -40,8 +66,8 @@ class FootballSpider(scrapy.Spider):
 
         item['match_id'] = match_id
         item['match'] = name
-        item['tournament'] = tournament
         item['datetime'] = datetime
+        item['tournament'] = tournament
         item['odds'] = odds
 
         yield item
