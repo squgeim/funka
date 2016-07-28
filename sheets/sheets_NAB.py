@@ -72,7 +72,7 @@ class Sheets():
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def get_last_id(self, row_no = False):
+    def get_last_date(self, row_no = False):
         rangeName = self.sheet_name + '!'
         rangeName += 'C1:C'
 
@@ -93,7 +93,7 @@ class Sheets():
             raise ValueError('Invalid usage')
 
         if last:
-            row_no = self.get_last_id(row_no = True)
+            row_no = self.get_last_date(row_no = True)
 
         rangeName = self.sheet_name + '!'
         rangeName += 'A{0}:V{0}'.format(row_no)
@@ -112,7 +112,7 @@ class Sheets():
         if not type(row) is list:
             raise Exception('row is not a list')
 
-        row_count = self.get_last_id(row_no=True) + 1
+        row_count = self.get_last_date(row_no=True) + 1
 
         new_row = row[0:14] # A-N
         new_row.append('=right(B{0},7)'.format(row_count)) #O
