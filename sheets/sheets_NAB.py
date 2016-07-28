@@ -108,7 +108,7 @@ class Sheets():
 
         return row
     
-    def append_row(self, row, sheet_name = None):
+    def append_row(self, row):
         if not type(row) is list:
             raise Exception('row is not a list')
 
@@ -138,7 +138,7 @@ class Sheets():
                 valueInputOption='USER_ENTERED', body=body).execute()
         return result
 
-    def sort_sheet(self, sheet_name = None):
+    def sort_sheet(self):
 
         sort_column_index = 2 # sort using 3rd column
 
