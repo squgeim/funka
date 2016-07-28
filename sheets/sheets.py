@@ -12,7 +12,7 @@ from oauth2client import tools
 
 class Sheets():
 
-    def __init__(self, spreadsheetId, client_secret_file, application_name):
+    def __init__(self, spreadsheetId, client_secret_file, application_name, sheet_name = None):
         try:
             import argparse
             flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
@@ -30,6 +30,18 @@ class Sheets():
                                   discoveryServiceUrl=discoveryUrl)
 
         self.spreadsheetId = spreadsheetId
+
+        result = self.service.spreadsheets().get(spreadsheetId=self.spreadsheetId).execute()
+        sheets = [ sheet['properties'] for sheet in result['sheets'] ]
+        keys = [ sheet['title'] for sheet in sheets ]
+        self.sheets = dict(zip(keys, sheets))
+
+        if sheet_name and sheet_name in self.sheets.keys():
+            self.sheet_name = sheet_name
+        else:
+            self.sheet_name = None
+
+        print(sheets)
 
     def get_credentials(self):
         """Gets valid user credentials from storage.
@@ -60,8 +72,16 @@ class Sheets():
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def get_last_id(self, row_no = False):
-        rangeName = 'A1:A'
+    def get_last_id(self, row_no = False, sheet_name = None):
+        if sheet_name and sheet_name in self.sheets.keys():
+            rangeName = sheet_name + '!'
+        elif self.sheet_name:
+            rangeName = self.sheet_name + '!'
+        else:
+            rangeName = ''
+            
+        rangeName += 'A1:A'
+
         result = self.service.spreadsheets().values().get(
                 spreadsheetId=self.spreadsheetId, range=rangeName,
                 majorDimension='COLUMNS').execute()
@@ -74,7 +94,7 @@ class Sheets():
         else:
             return last_id
     
-    def append_row(self, row):
+    def append_row(self, row, sheet_name = None):
         if not type(row) is list:
             raise Exception('row is not a list')
 
@@ -88,7 +108,14 @@ class Sheets():
         new_row.append('=if(J{}<50000,1000,0)'.format(row_count)) #O
         new_row.append('=N{0}-O{0}'.format(row_count)) #P
 
-        rangeName = 'A{0}:J{0}'.format(row_count)
+        if sheet_name and sheet_name in self.sheets.keys():
+            rangeName = sheet_name + '!'
+        elif self.sheet_name:
+            rangeName = self.sheet_name + '!'
+        else:
+            rangeName = ''
+ 
+        rangeName += 'A{0}:P{0}'.format(row_count)
 
         body = {
             'range' : rangeName,
@@ -101,13 +128,21 @@ class Sheets():
                 valueInputOption='USER_ENTERED', body=body).execute()
         return result
 
-    def sort_sheet(self):
+    def sort_sheet(self, sheet_name = None):
+
+        if sheet_name and sheet_name in self.sheets.keys():
+            sheetId = self.sheets[sheet_name].sheetId
+        elif self.sheet_name:
+            sheetId = self.sheets[self.sheet_name].sheetId
+        else:
+            sheetId = 0
+ 
         body = {
             'requests': [
                 {
                     'sortRange': {
                         'range': {
-                            'sheetId': 0,
+                            'sheetId': sheetId,
                             'startRowIndex': 1,
                             'startColumnIndex': 0
                         },
@@ -128,7 +163,9 @@ class Sheets():
         return result
 
 if __name__=='__main__':
-    sheet = Sheets('1mKAsY92nA3I6PhTkNd9aLIY8_SZMXERr2wg5WTYMk34', 'client_secret.json',
-            'FinancialData')
+    sheet = Sheets(spreadsheetId = '1mKAsY92nA3I6PhTkNd9aLIY8_SZMXERr2wg5WTYMk34', 
+            client_secret_file = 'client_secret.json',
+            application_name = 'FinancialData',
+            sheet_name = 'Sheet1')
     
-    print(sheet.sort_sheet())
+    print(sheet.get_last_id())
