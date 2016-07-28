@@ -41,8 +41,6 @@ class Sheets():
         else:
             self.sheet_name = None
 
-        print(sheets)
-
     def get_credentials(self):
         """Gets valid user credentials from storage.
 
@@ -131,9 +129,9 @@ class Sheets():
     def sort_sheet(self, sheet_name = None):
 
         if sheet_name and sheet_name in self.sheets.keys():
-            sheetId = self.sheets[sheet_name].sheetId
+            sheetId = self.sheets[sheet_name]['sheetId']
         elif self.sheet_name:
-            sheetId = self.sheets[self.sheet_name].sheetId
+            sheetId = self.sheets[self.sheet_name]['sheetId']
         else:
             sheetId = 0
  
