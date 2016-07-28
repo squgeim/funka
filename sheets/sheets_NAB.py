@@ -12,7 +12,7 @@ from oauth2client import tools
 
 class Sheets():
 
-    def __init__(self, spreadsheetId, client_secret_file, application_name, sheet_name = None):
+    def __init__(self, spreadsheetId, client_secret_file, application_name, sheet_name):
         try:
             import argparse
             flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
@@ -32,14 +32,16 @@ class Sheets():
         self.spreadsheetId = spreadsheetId
 
         result = self.service.spreadsheets().get(spreadsheetId=self.spreadsheetId).execute()
-        sheets = [ sheet['properties'] for sheet in result['sheets'] ]
-        keys = [ sheet['title'] for sheet in sheets ]
-        self.sheets = dict(zip(keys, sheets))
 
-        if sheet_name and sheet_name in self.sheets.keys():
-            self.sheet_name = sheet_name
-        else:
-            self.sheet_name = None
+        sheet = [ (sheet['properties']['sheetId'], sheet['properties']['title']) for sheet in result['sheets'] if sheet['properties']['title'] == sheet_name ]
+
+        if not sheet:
+            raise ValueError('No such sheet in this spreadsheet')
+
+        self.sheet_name = sheet_name
+        self.sheet_id = sheet[0][0]
+
+        self.last_row = self.get_row(last=True)
 
     def get_credentials(self):
         """Gets valid user credentials from storage.
@@ -70,14 +72,8 @@ class Sheets():
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def get_last_id(self, row_no = False, sheet_name = None):
-        if sheet_name and sheet_name in self.sheets.keys():
-            rangeName = sheet_name + '!'
-        elif self.sheet_name:
-            rangeName = self.sheet_name + '!'
-        else:
-            rangeName = ''
-            
+    def get_last_id(self, row_no = False):
+        rangeName = self.sheet_name + '!'
         rangeName += 'C1:C'
 
         result = self.service.spreadsheets().values().get(
@@ -91,6 +87,26 @@ class Sheets():
             return len(values[0])
         else:
             return last_id
+
+    def get_row(self, row_no = None, last = False):
+        if not row_no and not last:
+            raise ValueError('Invalid usage')
+
+        if last:
+            row_no = self.get_last_id(row_no = True)
+
+        rangeName = self.sheet_name + '!'
+        rangeName += 'A{0}:V{0}'.format(row_no)
+
+        result = self.service.spreadsheets().values().get(
+                spreadsheetId=self.spreadsheetId, range=rangeName,
+                majorDimension='ROWS').execute()
+
+        values = result.get('values',[])
+
+        row = values[0] 
+
+        return row
     
     def append_row(self, row, sheet_name = None):
         if not type(row) is list:
@@ -100,21 +116,15 @@ class Sheets():
 
         new_row = row[0:14] # A-N
         new_row.append('=right(B{0},7)'.format(row_count)) #O
-        new_row.append('') #P
+        new_row.append( self.last_row[15] ) #P
         new_row.append('=J{0}'.format(row_count)) #Q
         new_row.append('=if(J{0}="JPY",I{0}*100,I{0})'.format(row_count)) #R
-        new_row.append('') #S
+        new_row.append( self.last_row[18] ) #S
         new_row.append('=R{0}-S{0}'.format(row_count)) #T
-        new_row.append('') #U
-        new_row.append('') #V
+        new_row.append( self.last_row[20] ) #U
+        new_row.append( self.last_row[21] ) #V
 
-        if sheet_name and sheet_name in self.sheets.keys():
-            rangeName = sheet_name + '!'
-        elif self.sheet_name:
-            rangeName = self.sheet_name + '!'
-        else:
-            rangeName = ''
- 
+        rangeName = self.sheet_name + '!'
         rangeName += 'A{0}:P{0}'.format(row_count)
 
         body = {
@@ -130,25 +140,20 @@ class Sheets():
 
     def sort_sheet(self, sheet_name = None):
 
-        if sheet_name and sheet_name in self.sheets.keys():
-            sheetId = self.sheets[sheet_name].sheetId
-        elif self.sheet_name:
-            sheetId = self.sheets[self.sheet_name]['sheetId']
-        else:
-            sheetId = 0
- 
+        sort_column_index = 2 # sort using 3rd column
+
         body = {
             'requests': [
                 {
                     'sortRange': {
                         'range': {
-                            'sheetId': sheetId,
+                            'sheetId': self.sheet_id,
                             'startRowIndex': 1,
                             'startColumnIndex': 0
                         },
                         'sortSpecs': [
                             {
-                                'dimensionIndex': 2, # sort using 3rd column
+                                'dimensionIndex': sort_column_index,
                                 'sortOrder': 'ASCENDING'
                             }
                         ]
@@ -168,5 +173,4 @@ if __name__=='__main__':
             application_name = 'FinancialData',
             sheet_name = 'V46')
     
-    sheet.sort_sheet()
-    print(sheet.get_last_id())
+    print()
