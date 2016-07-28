@@ -81,12 +81,12 @@ class Sheets():
                 majorDimension='COLUMNS').execute()
         values = result.get('values',[])
         
-        last_id = values[0][-1]
+        last_date = values[0][-1]
 
         if row_no:
             return len(values[0])
         else:
-            return last_id
+            return last_date
 
     def get_row(self, row_no = None, last = False):
         if not row_no and not last:
@@ -125,7 +125,7 @@ class Sheets():
         new_row.append( self.last_row[21] ) #V
 
         rangeName = self.sheet_name + '!'
-        rangeName += 'A{0}:P{0}'.format(row_count)
+        rangeName += 'A{0}:V{0}'.format(row_count)
 
         body = {
             'range' : rangeName,
